@@ -81,3 +81,11 @@ ruff check roe_guard/
 ## Lisans
 
 MIT — bkz. [LICENSE](LICENSE).
+
+---
+
+> **NOT (Branch Koruması):** `main` branch'ine doğrudan push kapatılmalıdır.
+> Tüm değişiklikler `ticket/T<N>-<slug>` formatında branch + Pull Request
+> üzerinden merge edilmelidir. Bu ayar GitHub repo settings → Branches →
+> Branch protection rules → `main` → "Require a pull request before merging"
+> üzerinden manuel yapılmalıdır. Commit mesaj formatı: `[T<N>] <açıklama>`.
