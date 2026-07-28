@@ -122,10 +122,10 @@ with engagement.window():
         engagement.check(host, "recon").raise_if_denied()
         scan(host)
 
+
 # Decorator — mevcut bir fonksiyonu saydam şekilde korur
 @guarded(engagement, action_type="exploit", target_arg="host")
-def run_exploit(host: str):
-    ...
+def run_exploit(host: str): ...
 ```
 
 ```bash
