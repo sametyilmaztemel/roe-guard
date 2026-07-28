@@ -1,0 +1,6 @@
+valid_from: "2026-08-01T00:00:00Z"
+valid_until: "2026-08-28T23:59:59Z"
+
+scope:
+  allow:
+    - cidr: "10.20.0.0/16"
