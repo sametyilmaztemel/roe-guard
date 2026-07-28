@@ -1,20 +1,10 @@
 """
 roe_guard.models
 
-Core data models for roe-guard.
+Core immutable data models for roe-guard.
 
-These dataclasses will be fully populated in T2.  At present they define
-the shape of every domain object used throughout the library so that other
-modules can reference them with correct type annotations.
-
-Planned classes (stubs):
-    - ScopeEntry     — a single allow/deny entry (CIDR or hostname glob).
-    - Scope          — collection of allow/deny entries.
-    - BlackoutWindow — a time-range during which all actions are denied.
-    - Policy         — the fully parsed engagement policy.
-    - Engagement     — a Policy bound to an active operation.
-    - Decision       — the outcome of a single enforce() call.
-    - AuditEntry     — one record in the append-only audit chain.
+All dataclasses are frozen (immutable).  Structural validation lives in
+``__post_init__`` so that an object can never exist in an invalid state.
 """
 
 from __future__ import annotations
@@ -22,7 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+
+from roe_guard.exceptions import OutOfScopeError
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -49,9 +40,7 @@ class DecisionType(str, Enum):
 
 @dataclass(frozen=True)
 class ScopeEntry:
-    """A single allow/deny entry.
-
-    Exactly one of ``cidr`` / ``hostname`` should be set.
+    """A single allow/deny entry — exactly one of ``cidr`` / ``hostname``.
 
     Attributes:
         cidr:     CIDR notation string, e.g. ``"10.20.0.0/16"``.
@@ -61,12 +50,20 @@ class ScopeEntry:
     cidr: str | None = None
     hostname: str | None = None
 
+    def __post_init__(self) -> None:
+        if self.cidr is None and self.hostname is None:
+            raise ValueError("ScopeEntry requires at least one of 'cidr' or 'hostname'")
+
 
 @dataclass(frozen=True)
 class Scope:
     """Collection of allowed and denied scope entries.
 
-    ``deny`` always takes precedence over ``allow``.
+    ``deny`` always takes precedence over ``allow`` (spec §5).
+
+    Attributes:
+        allow: Entries describing permitted targets.
+        deny:  Entries describing explicitly forbidden targets (carve-outs).
     """
 
     allow: list[ScopeEntry] = field(default_factory=list)
@@ -85,12 +82,12 @@ class BlackoutWindow:
     Attributes:
         start:  UTC datetime — window begins (inclusive).
         end:    UTC datetime — window ends (exclusive).
-        reason: Human-readable explanation (optional).
+        reason: Human-readable explanation.
     """
 
     start: datetime
     end: datetime
-    reason: str | None = None
+    reason: str = ""
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +97,7 @@ class BlackoutWindow:
 
 @dataclass(frozen=True)
 class Policy:
-    """Fully-parsed engagement policy.
+    """Fully-parsed engagement policy (spec §5 schema).
 
     Populated by :func:`roe_guard.policy.load_policy` (T3).
 
@@ -116,9 +113,9 @@ class Policy:
         approvers:              Email/identifier list of authorised approvers.
     """
 
-    engagement_id: str = ""
-    valid_from: datetime | None = None
-    valid_until: datetime | None = None
+    engagement_id: str
+    valid_from: datetime
+    valid_until: datetime
     scope: Scope = field(default_factory=Scope)
     actions_allow: list[str] = field(default_factory=list)
     actions_deny: list[str] = field(default_factory=list)
@@ -132,7 +129,7 @@ class Policy:
 # ---------------------------------------------------------------------------
 
 
-@dataclass
+@dataclass(frozen=True)
 class Engagement:
     """A :class:`Policy` bound to a concrete operation context.
 
@@ -141,12 +138,10 @@ class Engagement:
     ``check()`` / ``enforce()`` (implemented in T4).
 
     Attributes:
-        policy:       The parsed engagement policy.
-        operation_id: Optional runtime operation identifier.
+        policy: The parsed engagement policy.
     """
 
     policy: Policy
-    operation_id: str | None = None
 
     # --- Planned public API (T3 / T4 / T6) -------------------------------
 
@@ -162,7 +157,6 @@ class Engagement:
         self,
         target: str,
         action_type: str,
-        metadata: dict[str, Any] | None = None,
     ) -> Decision:
         """Evaluate a single action against the policy.
 
@@ -170,15 +164,6 @@ class Engagement:
         Implemented in T4.
         """
         raise NotImplementedError("Engagement.check() — implemented in T4")
-
-    def enforce(
-        self,
-        target: str,
-        action_type: str,
-        metadata: dict[str, Any] | None = None,
-    ) -> Decision:
-        """Alias for :meth:`check`; enforced by the decision engine (T4)."""
-        raise NotImplementedError("Engagement.enforce() — implemented in T4")
 
 
 # ---------------------------------------------------------------------------
@@ -191,58 +176,57 @@ class Decision:
     """The outcome of a single policy evaluation.
 
     Attributes:
-        decision:      ALLOW, DENY, or REQUIRES_APPROVAL.
-        target:        The evaluated target string.
-        action_type:   The evaluated action type.
-        reason:        Human-readable explanation of the decision.
-        engagement_id: ID of the engagement whose policy produced this.
+        outcome:     ALLOW, DENY, or REQUIRES_APPROVAL.
+        reason:      Human-readable explanation of the decision.
+        target:      The evaluated target string.
+        action_type: The evaluated action type.
+        timestamp:   UTC datetime when the decision was made.
     """
 
-    decision: DecisionType
+    outcome: DecisionType
+    reason: str
     target: str
     action_type: str
-    reason: str = ""
-    engagement_id: str = ""
+    timestamp: datetime
 
     @property
     def allowed(self) -> bool:
-        """``True`` only when the decision is ALLOW."""
-        return self.decision is DecisionType.ALLOW
+        """``True`` only when the outcome is ALLOW."""
+        return self.outcome is DecisionType.ALLOW
+
+    @property
+    def denied(self) -> bool:
+        """``True`` only when the outcome is DENY."""
+        return self.outcome is DecisionType.DENY
 
     def raise_if_denied(self) -> None:
         """Raise :class:`OutOfScopeError` if this decision is DENY.
 
-        Implemented in T4 alongside the decision engine.
+        No-op for ALLOW and REQUIRES_APPROVAL.
         """
-        raise NotImplementedError("Decision.raise_if_denied() — implemented in T4")
+        if self.outcome is DecisionType.DENY:
+            raise OutOfScopeError(
+                f"Denied: target={self.target!r} action={self.action_type!r} "
+                f"reason={self.reason}"
+            )
 
 
 # ---------------------------------------------------------------------------
-# Audit
+# Audit (stub — fully implemented in T5)
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class AuditEntry:
-    """A single record in the append-only audit chain.
+    """A single record in the append-only audit chain (stub — T5).
 
     Attributes:
-        engagement_id: Engagement this entry belongs to.
-        timestamp:     UTC time of the decision.
-        target:        The evaluated target.
-        action_type:   The evaluated action type.
-        decision:      ALLOW / DENY / REQUIRES_APPROVAL.
-        reason:        Explanation.
-        prev_hash:     SHA-256 of the previous entry's canonical JSON.
-        entry_hash:    SHA-256 of this entry's canonical JSON (incl. prev_hash).
+        decision:   The :class:`DecisionType` outcome recorded.
+        prev_hash:  SHA-256 of the previous entry's canonical JSON.
+        entry_hash: SHA-256 of this entry's canonical JSON (incl. prev_hash).
     """
 
-    engagement_id: str
-    timestamp: datetime
-    target: str
-    action_type: str
     decision: DecisionType
-    reason: str
     prev_hash: str
     entry_hash: str
 
