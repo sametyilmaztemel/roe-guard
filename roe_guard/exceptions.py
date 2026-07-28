@@ -62,7 +62,27 @@ class PolicyParseError(RoeGuardError):
         self.reason = reason
 
 
+class AuditIntegrityError(RoeGuardError):
+    """Raised when an audit log's hash chain fails integrity verification.
+
+    ``AuditLog.verify()`` returns a result object instead of raising;
+    this exception is provided for CLI/integration callers that prefer
+    an exception-based control flow (T7).
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        broken_at_index: int | None = None,
+    ) -> None:
+        if broken_at_index is not None and not message:
+            message = f"Audit chain broken at entry index {broken_at_index}"
+        super().__init__(message)
+        self.broken_at_index = broken_at_index
+
+
 __all__ = [
+    "AuditIntegrityError",
     "OutOfScopeError",
     "PolicyExpiredError",
     "PolicyParseError",

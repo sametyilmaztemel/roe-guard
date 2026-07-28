@@ -221,27 +221,63 @@ class Decision:
 
 
 # ---------------------------------------------------------------------------
-# Audit (stub — fully implemented in T5)
+# Audit
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
 class AuditEntry:
-    """A single record in the append-only audit chain (stub — T5).
+    """A single record in the append-only audit chain (T5).
+
+    Mirrors the :class:`Decision` payload (so the audit line is
+    self-describing without referring back to other records) and adds
+    the hash-chain fields ``prev_hash`` and ``entry_hash``.
 
     Attributes:
-        decision:   The :class:`DecisionType` outcome recorded.
-        prev_hash:  SHA-256 of the previous entry's canonical JSON.
-        entry_hash: SHA-256 of this entry's canonical JSON (incl. prev_hash).
+        engagement_id: Engagement this entry belongs to (spec §6).
+        timestamp:     UTC datetime of the decision.
+        target:        The evaluated target.
+        action_type:   The evaluated action type.
+        decision:      ALLOW / DENY / REQUIRES_APPROVAL.
+        reason:        Human-readable explanation.
+        prev_hash:     SHA-256 of the previous entry's canonical JSON,
+                       or the genesis constant for the first entry.
+        entry_hash:    SHA-256 of this entry's canonical JSON
+                       (including ``prev_hash``).
     """
 
+    engagement_id: str
+    timestamp: datetime
+    target: str
+    action_type: str
     decision: DecisionType
+    reason: str
     prev_hash: str
     entry_hash: str
 
 
+@dataclass(frozen=True)
+class AuditVerificationResult:
+    """Result of an :class:`~roe_guard.audit.AuditLog.verify` call.
+
+    Attributes:
+        valid:            True iff every line's hash chain is intact.
+        total_entries:    Total number of entries inspected.
+        broken_at_index:  Index (0-based) of the first broken entry, or
+                          ``None`` when ``valid``.
+        reason:           Human-readable explanation of the failure, or
+                          ``None`` when ``valid``.
+    """
+
+    valid: bool
+    total_entries: int
+    broken_at_index: int | None = None
+    reason: str | None = None
+
+
 __all__ = [
     "AuditEntry",
+    "AuditVerificationResult",
     "BlackoutWindow",
     "Decision",
     "DecisionType",

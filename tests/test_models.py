@@ -243,8 +243,15 @@ class TestDecision:
 
 class TestAuditEntry:
     def test_valid_creation(self) -> None:
+        from datetime import datetime, timezone
+
         entry = AuditEntry(
+            engagement_id="eng-1",
+            timestamp=datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc),
+            target="10.20.3.5",
+            action_type="recon",
             decision=DecisionType.ALLOW,
+            reason="test",
             prev_hash="0" * 64,
             entry_hash="a" * 64,
         )
@@ -253,8 +260,15 @@ class TestAuditEntry:
         assert len(entry.entry_hash) == 64
 
     def test_frozen(self) -> None:
+        from datetime import datetime, timezone
+
         entry = AuditEntry(
+            engagement_id="eng-1",
+            timestamp=datetime(2026, 8, 10, 12, 0, 0, tzinfo=timezone.utc),
+            target="10.20.3.5",
+            action_type="recon",
             decision=DecisionType.DENY,
+            reason="test",
             prev_hash="0" * 64,
             entry_hash="a" * 64,
         )
