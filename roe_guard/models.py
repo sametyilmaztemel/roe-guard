@@ -157,13 +157,22 @@ class Engagement:
         self,
         target: str,
         action_type: str,
+        now: datetime | None = None,
     ) -> Decision:
         """Evaluate a single action against the policy.
 
-        Returns a :class:`Decision` (ALLOW / DENY / REQUIRES_APPROVAL).
-        Implemented in T4.
+        Thin wrapper around :func:`roe_guard.engine.enforce` (T4) that
+        binds the engagement automatically.
         """
-        raise NotImplementedError("Engagement.check() — implemented in T4")
+        # Local import to avoid circular dependency at module load time.
+        from roe_guard.engine import enforce
+
+        return enforce(
+            engagement=self,
+            target=target,
+            action_type=action_type,
+            now=now,
+        )
 
 
 # ---------------------------------------------------------------------------
