@@ -12,6 +12,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from roe_guard.exceptions import OutOfScopeError
 
@@ -173,6 +174,20 @@ class Engagement:
             action_type=action_type,
             now=now,
         )
+
+    def window(self) -> Any:
+        """Activate this engagement as a context manager (spec §6).
+
+        Thin wrapper around
+        :func:`roe_guard.integrations.context.window`.  Returns a
+        context manager so callers can write ``with engagement.window():``.
+
+        Import is local to avoid a circular dependency (integrations
+        imports from models).
+        """
+        from roe_guard.integrations.context import window
+
+        return window(self)
 
 
 # ---------------------------------------------------------------------------
