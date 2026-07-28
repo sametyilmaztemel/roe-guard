@@ -81,7 +81,33 @@ class AuditIntegrityError(RoeGuardError):
         self.broken_at_index = broken_at_index
 
 
+class ApprovalRequiredError(RoeGuardError):
+    """Raised when a decision is REQUIRES_APPROVAL.
+
+    The v0.1 enforcement flow blocks on REQUIRES_APPROVAL (no implicit
+    approval).  A future v0.2 CLI command will provide the actual
+    approval flow (``roe-guard approve <request-id>``).
+
+    Attributes:
+        target:      The evaluated target.
+        action_type: The evaluated action type.
+    """
+
+    def __init__(
+        self,
+        message: str = "",
+        target: str = "",
+        action_type: str = "",
+    ) -> None:
+        if target and action_type and not message:
+            message = f"Action {action_type!r} on {target!r} requires human approval"
+        super().__init__(message)
+        self.target = target
+        self.action_type = action_type
+
+
 __all__ = [
+    "ApprovalRequiredError",
     "AuditIntegrityError",
     "OutOfScopeError",
     "PolicyExpiredError",
