@@ -1,0 +1,22 @@
+engagement_id: "acme-fintech-2026-08"
+valid_from: "2026-08-01T00:00:00Z"
+valid_until: "2026-08-28T23:59:59Z"
+
+scope:
+  allow:
+    - cidr: "10.20.0.0/16"
+    - hostname: "*.staging.acme.internal"
+  deny:
+    - cidr: "10.20.5.0/24"        # explicit carve-out (örn. prod DB subnet)
+
+actions:
+  allow: ["recon", "exploit", "persistence-test"]
+  deny: ["destructive", "data-exfil"]
+
+blackout_windows:
+  - start: "2026-08-15T00:00:00Z"
+    end: "2026-08-16T00:00:00Z"
+    reason: "müşteri bakım penceresi"
+
+approval_required_for: ["persistence-test"]
+approvers: ["ops-lead@acme.example"]
