@@ -165,12 +165,14 @@ engagement.check("8.8.8.8", "recon", now=NOW).raise_if_denied()
 ```python
 from roe_guard.integrations.decorator import guarded
 
+
 @guarded(engagement, action_type="recon", target_arg="host")
 def scan(host: str) -> str:
     return f"scanned:{host}"
 
-scan("10.20.3.5")   # → "scanned:10.20.3.5"
-scan("8.8.8.8")     # → OutOfScopeError (wrapped fonksiyon hiç çağrılmadı)
+
+scan("10.20.3.5")  # → "scanned:10.20.3.5"
+scan("8.8.8.8")  # → OutOfScopeError (wrapped fonksiyon hiç çağrılmadı)
 ```
 
 ### 6. Birden fazla aksiyonu `engagement.window()` ile toplu kontrol et
