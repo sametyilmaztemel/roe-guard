@@ -1,5 +1,9 @@
 # roe-guard
 
+[![CI](https://github.com/sametyilmaztemel/roe-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/sametyilmaztemel/roe-guard/actions/workflows/ci.yml)
+[![Python ≥ 3.10](https://img.shields.io/badge/python-%E2%89%A53.10-blue)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **Rules of Engagement policy-enforcement library — scope, gate, log, clean.**
 
 `roe-guard` lets a security operation (pentest, red team, autonomous
