@@ -63,8 +63,8 @@ roe-guard 0.1.0a1
 
 ```yaml
 engagement_id: "demo-acme-2026-08"
-valid_from: "2026-08-01T00:00:00Z"
-valid_until: "2026-09-30T23:59:59Z"
+valid_from: "2020-01-01T00:00:00Z"
+valid_until: "2030-01-01T00:00:00Z"
 
 scope:
   allow:
@@ -80,13 +80,19 @@ actions:
 approval_required_for: ["persistence-test"]
 ```
 
+> **Not:** Geçerli policy tarih aralığı (`2020–2030`) bilinçli olarak
+> geniş tutulmuştur — README'deki örnekler hangi tarihte çalıştırılırsa
+> çalıştırılsın, "policy expired" hatasına düşmesin diye. Gerçek
+> engagement'larda `valid_from`/`valid_until` gerçek pencereye
+> ayarlanmalı.
+
 (Tam örnek için `tests/fixtures/demo_policy.yaml`)
 
 ### 2. Doğrula
 
 ```
 $ roe-guard validate tests/fixtures/demo_policy.yaml
-✓ Valid policy: demo-acme-2026-08 (2026-08-01T00:00:00+00:00 → 2026-09-30T23:59:59+00:00)
+✓ Valid policy: demo-acme-2026-08 (2020-01-01T00:00:00+00:00 → 2030-01-01T00:00:00+00:00)
 ```
 
 ### 3. Karar al
@@ -177,6 +183,10 @@ with engagement.window():
         engagement.check(host, "recon").raise_if_denied()
         scan(host)
 ```
+
+Bu örnekte `discovered_hosts = ["10.20.3.5", "10.20.3.6", "8.8.8.8"]`
+olsa, ilk iki host taranır, `8.8.8.8` scope dışı olduğu için
+`raise_if_denied()` `OutOfScopeError` fırlatır ve döngü kesilir.
 
 ### 7. Audit zinciri oluştur ve doğrula
 
