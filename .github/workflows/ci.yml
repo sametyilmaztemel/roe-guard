@@ -70,10 +70,23 @@ jobs:
       - name: Install pip-audit
         run: python -m pip install --upgrade pip pip-audit
 
-      - name: Install package
-        run: pip install -e ".[dev]"
+      - name: Install runtime + dev dependencies
+        # Install dependencies WITHOUT roe-guard itself — pip-audit can
+        # only audit third-party packages on PyPI, and our self-reference
+        # is not yet on PyPI (T9 ticket is the packaging step).
+        run: |
+          pip install pyyaml
+          pip install pytest pytest-cov ruff tomli
 
       - name: Run pip-audit
-        # --skip-editable: roe-guard itself is not yet on PyPI (T9 is the
-        # packaging ticket); audit only the third-party dependencies.
-        run: pip-audit --strict --skip-editable
+        # Audit only the third-party deps from requirements-style list,
+        # not the roe-guard package itself.
+        run: |
+          cat > /tmp/requirements.txt <<'EOF'
+          pyyaml
+          pytest
+          pytest-cov
+          ruff
+          tomli
+          EOF
+          pip-audit --strict -r /tmp/requirements.txt
