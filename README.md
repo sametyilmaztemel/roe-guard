@@ -331,45 +331,46 @@ Full design notes and the v0.2/v0.3 roadmap live in
 
 ### Nedir bu?
 
-roe-guard, bir YAML politika dosyasını alıp onu kodun içinden
-sorgulayabileceğiniz bir koruma katmanına çeviren küçük bir Python
-kütüphanesi.
+roe-guard küçük bir Python kütüphanesi. Tek yaptığı şey: bir YAML
+politika dosyasını alıp, kodun içinden "şu hedefe şu aksiyonu
+atabilir miyim?" diye sorabileceğiniz küçük bir koruma katmanına
+çevirmek.
 
-*Operasyon nelerle uğraşabilir, hangi aksiyon tipleri kapsamda sayılır,
-ne zaman geçerlidir* — bunları tek bir dosyada tanımlıyorsunuz.
-roe-guard'a sorduğunuz her çağrı temiz bir ALLOW / DENY /
-REQUIRES_APPROVAL kararıyla dönüyor; her karar da tahrif edilemez bir
-audit log'a düşüyor.
+Nereye dokunulabilir, hangi aksiyon tipleri kapsamda, ne zaman
+geçerli — hepsi tek dosyada. Her sorunuza temiz bir ALLOW / DENY /
+REQUIRES_APPROVAL kararıyla yanıt veriyor; verdiği her karar da
+tahrif edilemez bir log'a düşüyor.
 
-Hepsi bu. Ağınıza oturmuyor, paketleri yakalamıyor, firewall değil.
-Kodunuzun içinde riskli bir şey yapmadan önce çağırdığınız bir
-fonksiyon olarak yaşıyor. Aracınız onu çağırmıyorsa roe-guard size
-yardım edemez — bu bilinçli bir tercih, aşağıda uzun uzun anlattım.
+Bu kadar. Ağınıza oturmuyor, paketleri yakalamıyor, firewall değil.
+Kodunuzun içinde, riskli bir şey yapmadan önce çağırdığınız sıradan
+bir fonksiyon. Aracınız onu çağırmıyorsa yapabileceği bir şey yok —
+bu bilinçli bir tercih, nedenlerini aşağıda uzun uzun anlattım.
 
-Proje, [0rce Labs](https://github.com/orce-labs)'ın *sıfır-yetkisiz-operasyon*
-ilkesinin referans implementasyonu. Kullanmak için 0rce'ye ihtiyacınız yok.
+Proje, [0rce Labs](https://github.com/orce-labs)'ın
+*sıfır-yetkisiz-operasyon* ilkesinin referans uygulaması.
+Kullanmak için 0rce'ye ihtiyacınız yok.
 
 ### Neden uğraşalım?
 
-Scope creep, yani kapsam dışına taşma, gerçek bir pentest veya red team
-operasyonundaki en büyük hukuki ve operasyonel risk. Biri bir subnet'i
-yanlış yazar, prod veritabanını kurcalarsınız. Otonom bir araç
-"madem buradayım" der, sözleşmede olmayan bir sisteme dokunur.
-Sonucu nadiren güzel oluyor.
+Scope creep — yani kapsam dışına kayma — gerçek bir pentest ya da
+red team operasyonundaki en büyük hukuki ve operasyonel risk. Biri
+bir subnet'i yanlış yazar, prod veritabanını kurcalamış olursunuz.
+Ya da otonom bir araç "madem buradayım" deyip sözleşmede olmayan bir
+sisteme uzanır. Sonucu pek güzel olmuyor.
 
-Bugün kapsam kontrolü çoğunlukla ya operasyondan önce kuralları
-okuyan, sonra unutan bir insana emanet, ya da tek satır kod yazmadan
-önce altı haneli fiyat etiketi olan kurumsal bir SOAR platformuna.
-roe-guard ortada bir yerde duruyor: herhangi bir Python scriptine
-iki satırla eklenebilecek kadar küçük, denetçinizin isteyeceği makbuz
+Bugün kapsam kontrolü çoğu yerde ya operasyondan önce kuralları
+okuyup sonra unutan bir insana emanet, ya da tek satır kod yazmadan
+önce altı haneli fiyat etiketi olan bir SOAR platformuna. roe-guard
+ortada bir yerde duruyor: herhangi bir Python scriptine iki satırla
+eklenebilecek kadar küçük, denetçinizin isteyeceği makbuz
 niteliğinde olacak kadar sıkı.
 
 ### Kurulum
 
-> **Not:** roe-guard henüz PyPI'da değil. 0.1.0 sürümü trusted publishing
-> hattını da birlikte çıkaracak (`T9` changelog'a bak); o zamana kadar
-> kaynaktan kuruyorsunuz. Yayınlandığında ise kurulum `pip install
-> roe-guard`'a düşecek.
+> **Not:** roe-guard henüz PyPI'da değil. 0.1.0 sürümü trusted
+> publishing hattını da birlikte çıkaracak (`T9` changelog'a bak);
+> o zamana kadar kaynaktan kuruyorsunuz. Yayınlandığında ise
+> `pip install roe-guard`'a düşecek.
 
 Kaynaktan, geliştirme modunda:
 
@@ -379,10 +380,10 @@ cd roe-guard
 pip install -e ".[dev]"
 ```
 
-Python 3.10 ya da üzeri gerekli. Tek runtime bağımlılığı
+Python 3.10 ya da üstü lazım. Çalışma zamanındaki tek bağımlılık
 [`pyyaml`](https://pyyaml.org/).
 
-Kurulumu doğrulayın:
+Çalıştığını doğrulayın:
 
 ```bash
 $ roe-guard --version
@@ -391,8 +392,8 @@ roe-guard 0.1.0a1
 
 ### Hızlı başlangıç
 
-Politika bir YAML dosyası. Buradaki örnek bin satıra kaçmadan
-gösterilebilecek kadar dolu:
+Politika dediğim şey bir YAML dosyası. Burada göstereceğim örnek
+bin satıra çıkmadan içinde yeterince şey barındıran bir örnek:
 
 ```yaml
 engagement_id: "demo-acme-2026-08"
@@ -413,8 +414,8 @@ actions:
 approval_required_for: ["persistence-test"]
 ```
 
-(Tam örnek için `tests/fixtures/demo_policy.yaml` içinde aynısının
-biraz genişletilmiş hali var.)
+(`tests/fixtures/demo_policy.yaml` içinde bunun biraz daha
+genişletilmiş hali var.)
 
 Doğrulayın:
 
@@ -423,11 +424,10 @@ $ roe-guard validate tests/fixtures/demo_policy.yaml
 ✓ Valid policy: demo-acme-2026-08 (2020-01-01T00:00:00+00:00 → 2030-01-01T00:00:00+00:00)
 ```
 
-Motora bir soru sorun. Farklı girdiler, farklı sonuçlar:
+Şimdi motora bir soru soralım. Girdi değişiyor, karar da değişiyor:
 
 ```
-$ roe-guard check --target 10.20.3.5 --action recon \
-    --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
+$ roe-guard check --target 10.20.3.5 --action recon     --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
 target:     10.20.3.5
 action:     recon
 outcome:    ALLOW
@@ -436,8 +436,7 @@ timestamp:  2026-08-10T12:00:00+00:00
 ```
 
 ```
-$ roe-guard check --target 8.8.8.8 --action recon \
-    --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
+$ roe-guard check --target 8.8.8.8 --action recon     --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
 target:     8.8.8.8
 action:     recon
 outcome:    DENY
@@ -446,8 +445,7 @@ timestamp:  2026-08-10T12:00:00+00:00
 ```
 
 ```
-$ roe-guard check --target 10.20.5.7 --action recon \
-    --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
+$ roe-guard check --target 10.20.5.7 --action recon     --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
 target:     10.20.5.7
 action:     recon
 outcome:    DENY
@@ -456,8 +454,7 @@ timestamp:  2026-08-10T12:00:00+00:00
 ```
 
 ```
-$ roe-guard check --target 10.20.3.5 --action persistence-test \
-    --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
+$ roe-guard check --target 10.20.3.5 --action persistence-test     --policy tests/fixtures/demo_policy.yaml --now 2026-08-10T12:00:00Z
 target:     10.20.3.5
 action:     persistence-test
 outcome:    REQUIRES_APPROVAL
@@ -466,10 +463,10 @@ timestamp:  2026-08-10T12:00:00+00:00
 ```
 
 Çıkış kodları: **0 = ALLOW, 1 = DENY, 2 = REQUIRES_APPROVAL**. Bu
-eşleme bilinçli: CLI'yi saran bir shell scripti insan-okunur çıktıyı
-parse etmek zorunda kalmadan `$?`'a bakarak karar verebilsin diye.
+eşleme bilinçli: CLI'yi saran bir shell scripti, insan-okunur
+çıktıyı parse etmeden `$?`'a bakıp kararını verebilsin diye.
 
-Python tarafında aynı akış:
+Aynı şey Python'da:
 
 ```python
 from roe_guard.policy import load_policy
@@ -485,8 +482,8 @@ engagement.check("8.8.8.8", "recon").raise_if_denied()
 # → OutOfScopeError: Denied: target='8.8.8.8' action='recon' reason=target not in allowed scope
 ```
 
-Yapısını bozmak istemediğiniz mevcut bir fonksiyonunuz varsa bir
-dekoratör yeter:
+Yapısını bozmak istemediğiniz mevcut bir fonksiyon varsa dekoratör
+düşer:
 
 ```python
 from roe_guard.integrations.decorator import guarded
@@ -498,10 +495,10 @@ def scan(host: str) -> str:
 
 
 scan("10.20.3.5")  # → "scanned:10.20.3.5"
-scan("8.8.8.8")  # → OutOfScopeError. `scan`'in gövdesi hiç çalışmaz.
+scan("8.8.8.8")  # → OutOfScopeError. `scan`'ın gövdesi hiç çalışmaz.
 ```
 
-Veya bir bloğun tamamını kapsam altına alın:
+Bir de bütün bloğu kapsam altına alabilirsiniz:
 
 ```python
 from roe_guard.exceptions import OutOfScopeError
@@ -512,11 +509,11 @@ with engagement.window():
         scan(host)
 ```
 
-`window` context manager'ı girişte politikanın zaman aralığını bir kez
-kontrol eder; içeride kapsam kontrollerini istediğiniz gibi
-yerleştirebilirsiniz.
+`window` context manager'ı bloğa girerken politikanın tarih aralığını
+bir kez kontrol ediyor; içeride kendi kontrollerinizi istediğiniz
+gibi yerleştirebilirsiniz.
 
-İz bırakmak istiyorsanız, audit log'a yazın:
+İz bırakmak istiyorsanız audit log'a yazın:
 
 ```python
 from roe_guard.audit import AuditLog
@@ -526,97 +523,97 @@ for host, action in [("10.20.3.5", "recon"), ("8.8.8.8", "recon")]:
     audit.record(engagement.check(host, action), engagement_id=policy.engagement_id)
 ```
 
-Her entry bir öncekinin SHA-256 hash'ine zincirlenmiş olarak yazılır.
-CLI'dan doğrulayın:
+Her entry, bir öncekinin SHA-256 hash'ine zincirleniyor. CLI'dan
+doğrulamak için:
 
 ```
 $ roe-guard audit-verify /var/log/roe-guard.jsonl
 ✓ Audit chain valid (2 entries)
 ```
 
-Birisi (veya bir şey) zinciri güncellemeden bir satır ekler, siler ya
-da değiştirirse `audit-verify` size tam olarak hangi satırın kırıldığını
-söyler.
+Biri (ya da bir şey) zinciri güncellemeden bir satırı değiştirirse
+ya da silerse, `audit-verify` size tam olarak hangi satırın
+bozulduğunu söylüyor.
 
 ### CLI'a hızlı bakış
 
-| Alt komut          | Ne yapar                                | Çıkış kodları                         |
-|--------------------|-----------------------------------------|---------------------------------------|
-| `validate`         | YAML politika dosyasını parse + şema.   | `0` geçerli, `1` geçersiz             |
-| `check`            | Tek bir `(target, action)` çiftini değ.  | `0` ALLOW, `1` DENY, `2` REQ-APPROVAL |
-| `audit-verify`     | Hash zincirini yeniden hesapla, doğrula. | `0` sağlam, `1` bozuk                 |
+| Alt komut       | Ne yapar                                | Çıkış kodları                        |
+|-----------------|-----------------------------------------|--------------------------------------|
+| `validate`      | YAML politika dosyasını parse + şema.   | `0` geçerli, `1` geçersiz            |
+| `check`         | Tek bir `(target, action)` çiftini sına. | `0` ALLOW, `1` DENY, `2` REQ-APPROVAL |
+| `audit-verify`  | Hash zincirini yeniden hesapla, doğrula. | `0` sağlam, `1` bozuk                |
 
-Hepsinin seçenekleri için `--help`. `check`'teki `--now` bayrağı
-sistem saatini geçersiz kılar — test veya bir olayı belirli bir anda
-tekrar oynatmak için kullanışlı.
+Seçenekler için `--help`. `check`'teki `--now` bayrağı sistem
+saatini geçersiz kılıyor — testlerde ya da bir olayı belirli bir
+anda yeniden oynatmak istediğinizde işe yarıyor.
 
 ### Motor nasıl karar veriyor?
 
-Karar hattı sırası sabit sekiz adımdan oluşuyor; sırayla değerlendiriliyor,
-ilk eşleşen kazanıyor:
+Karar hattı sekiz basamaklı, sırası sabit bir merdiven. Yukarıdan
+aşağıya değerlendiriliyor; ilk eşleşen kazanıyor:
 
-1. Şu an `valid_from`'dan önce veya `valid_until`'den sonra → **DENY**.
+1. Şu an `valid_from`'dan önce ya da `valid_until`'den sonra → **DENY**.
 2. Şu an herhangi bir `blackout_windows` aralığındaysa → **DENY**.
 3. Hedef `scope.deny`'deki bir entry ile eşleşiyorsa → **DENY** (deny her zaman allow'u ezer).
 4. Hedef `scope.allow`'daki hiçbir entry ile eşleşmiyorsa → **DENY**.
 5. Aksiyon tipi `actions.deny`'deyse → **DENY**.
 6. Aksiyon tipi `approval_required_for`'daysa → **REQUIRES_APPROVAL**.
 7. Aksiyon tipi `actions.allow`'daysa → **ALLOW**.
-8. Yukarıdakilerin hiçbiri değilse → **DENY** (fail-closed varsayılan).
+8. Hiçbiri değilse → **DENY** (fail-closed varsayılan).
 
-Bu sırayı atlayan veya tersine çeviren bir politika yazmanız mümkün
-değil — bu bilinçli. Sıra, güvenlik sözleşmesinin kendisi.
+Bu sırayı atlayan ya da tersine çeviren bir politika yazmanız mümkün
+değil. Bilinçli bir tercih: sıra, güvenlik sözleşmesinin kendisi.
 
 ### Mimari
 
 ```
 YAML politika  →  load_policy()    →  Policy
-                                      ↓
-                          Engagement (policy + operation)
-                                      ↓
-              enforce(eng, target, action) → Decision
-                                      ↓
-                          audit.record() → JSONL + SHA-256 zincir
+                                    ↓
+                        Engagement (policy + operation)
+                                    ↓
+            enforce(eng, target, action) → Decision
+                                    ↓
+                        audit.record() → JSONL + SHA-256 zincir
 ```
 
 Modüller, tek satırda:
 
-- `models`        — Sabit (`frozen`) `Policy`, `Engagement`, `Decision`, `AuditEntry` dataclass'ları.
-- `policy`        — YAML yükleme ve şema doğrulama (`yaml.safe_load`, asla `unsafe` değil).
+- `models`        — `frozen` `Policy`, `Engagement`, `Decision`, `AuditEntry` dataclass'ları.
+- `policy`        — YAML yükleme ve şema doğrulama (`yaml.safe_load`, başka şansı yok).
 - `engine`        — Yukarıdaki sekiz basamaklı merdiven.
-- `audit`         — SHA-256 zincirli, append-only JSONL.
+- `audit`         — SHA-256 zincirli, yalnızca eklenebilir JSONL.
 - `integrations`  — `@guarded` dekoratörü ve `engagement.window()` context manager.
-- `cli`           — Üç alt komut, stdlib `argparse`, üçüncü parti CLI framework yok.
+- `cli`           — Üç alt komut, stdlib `argparse`, harici bir CLI çatısı yok.
 - `exceptions`    — `OutOfScopeError`, `PolicyExpiredError`, `PolicyParseError`, `AuditIntegrityError`, `ApprovalRequiredError`.
 
-Tek runtime bağımlılığı: **pyyaml**. Tasarımın tamamı
+Çalışma zamanındaki tek bağımlılık **pyyaml**. Tasarımın tamamı
 [`docs/SPEC.md`](docs/SPEC.md) içinde.
 
 ### Tehdit modeli ve dürüst sınırlar
 
-roe-guard bir güvenlik aracı, o yüzden sınırları özelliklerinden daha
-önemli. Bu bölümü atlamayın.
+roe-guard bir güvenlik aracı; sınırları özelliklerinden daha önemli.
+Burayı atlamayın.
 
 1. **Bu bir firewall değil.** roe-guard yalnızca `enforce()` ya da
    `@guarded` çağıran kodu kısıtlıyor. Opt-in yapmayan bir araç
-   istediğini yapabilir; roe-guard onu hiç görmez. Bu bir SDK
-   seviyesinde disiplin katmanı, ağ seviyesinde zorlama değil.
-2. **Audit log tahrifi *tespit* ediyor, *engellemiyor*.** Hash zinciri
-   sonradan yapılan ekleme, silme ve değişiklikleri yakalar. Dosyaya
-   yazma erişimi olan birinin dosyayı komple silmesini ya da baştan
-   yazmasını durduramaz.
+   istediğini yapar; roe-guard onu hiç görmez. Bu SDK seviyesinde
+   bir disiplin katmanı. Ağ seviyesinde bir zorlama değil.
+2. **Audit log tahrifi *tespit* eder, *engellemez*.** Hash zinciri
+   sonradan yapılan ekleme, silme ve değişiklikleri yakalar. Ama
+   dosyaya yazma yetkisi olan biri dosyayı komple silebilir ya da
+   baştan yazabilir — onu durduramaz.
 3. **Politika dosyası güvenilir girdi sayılıyor.** `safe_load`
-   RCE'yi kapatıyor; ama biri dosyayı diskte değiştirebilirse kapsam
-   aslında o kişinin yazdığı şey olmuş oluyor. Dosya izinleri sizin
-   sorumluluğunuzda.
-4. **Fail-closed, fail-loud.** Parse edilemeyen, süresi dolmuş veya
+   RCE'yi kapatıyor. Ama biri dosyayı diskte değiştirebilirse kapsam
+   fiilen o kişinin yazdığı şey olmuş oluyor. Dosya izinleri sizin
+   işiniz.
+4. **Fail-closed, fail-loud.** Parse edilemeyen, süresi dolmuş ya da
    belirsiz politika her şeyi reddeder. roe-guard çok sık DENY
-   döndürüyorsa bu bir bug değil, yapılandırmanızı düzeltmeniz için
-   kütüphanenin size söylediği şey.
+   dönüyorsa bu bir hata değil — kütüphanenin "yapılandırman
+   bozuk" diye bağırması.
 
-Bu sınırlar bir tasarım tercihi, eksiklik değil. İşi iyi yapan küçük,
-denetlenebilir bir kütüphane, beş işi kötü yapan çakı bıçağından
-iyidir.
+Bu sınırlar bir tasarım tercihi, eksiklik değil. Tek işi iyi yapan
+küçük, denetlenebilir bir kütüphane; beş işi kötü yapan çakı
+bıçağından iyidir.
 
 ### Geliştirme
 
@@ -627,16 +624,19 @@ ruff check .                    # lint
 ruff format --check .           # format kontrolü
 ```
 
-Spec'teki test coverage hedefi ≥%85. CI'daki matrix testi Python 3.10
-ila 3.13 arasında koşturuyor.
+Spec'teki coverage hedefi: ≥%85. CI'daki matrix Python 3.10'dan
+3.13'e kadar koşturuyor.
 
 ### Lisans
 
 MIT — bkz. [LICENSE](LICENSE).
 
 [0rce Labs](https://github.com/orce-labs) tarafından geliştirildi.
-Tasarım notlarının tamamı ve v0.2/v0.3 yol haritası
-[`docs/SPEC.md`](docs/SPEC.md) içinde.
+Tasarım notları ve v0.2/v0.3 yol haritası [`docs/SPEC.md`](docs/SPEC.md)
+içinde.
+
+---
+
 
 ---
 
